@@ -154,7 +154,7 @@ window.addEventListener('load', function() {
 
     for (let j = 0; j < 3; ++j) {
         for (let i = 0; i < 10; ++i) {
-            enemies.push(SPIN.create_node(30+(60)*i, 20+(60)*j, 40, 40, "04ff00", enemy_ai));
+            enemies.push(SPIN.create_node(30+(60)*i, 20+(60)*j, 40, 40, "#04ff00", enemy_ai));
         }
     }
 
