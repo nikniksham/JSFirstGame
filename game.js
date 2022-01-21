@@ -184,7 +184,7 @@ window.addEventListener('load', function() {
         }
     }
 
-    SPIN.create_node(640/2-25, 400, 50, 50, "#631262", (node) => {
+    SPIN.create_node(640/2-25, 400, 50, 50, "#000000", (node) => {
         if (SPIN.key('KeyA') && node.x - 4 >= -1) {
             node.x -= 4;
         }
