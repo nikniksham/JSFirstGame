@@ -66,7 +66,11 @@ const SPIN = new function () {
             this.title = title;
         }
 
-        study(home_task, person) {
+        study(person) {
+            var home_task = person.home_task;
+            if (home_task) {
+                person.home_task = false;
+            }
             if (Math.random() < this.chance) {
                 if (this.title == "shmon") {
                     person.shmon_damage(this.damage);
@@ -98,6 +102,14 @@ const SPIN = new function () {
 
     }
 
+    class Card extends Node {
+        constructor (x, y, w, h, img, type, update, func) {
+            super(x, y, w, h, img, type, update);
+
+
+        }
+    }
+
     SPIN.create_node = (x, y, w, h, img, type, update) => {
         return new Node(x, y, w, h, img, type, update);
     };
@@ -124,7 +136,7 @@ const SPIN = new function () {
         // ctx.drawImage(img, 0, 0);
         requestAnimationFrame(SPIN.update);
         timer++;
-        console.log(offset_x, offset_y);
+        // console.log(offset_x, offset_y);
     };
 
     SPIN.key = (key) => {
@@ -185,9 +197,9 @@ window.addEventListener('load', function() {
     var sub_images = ["Chemistry.png", "English.png", "History.png", "Informatic.png", "Math.png", "PE.png", "Physics.png", "Russian.png", "Shmon.png", "Informatic.png", "Russian.png", "Math.png"];
     var sub_damage = [[0.3, 15], [0.1, 25], [0.25, -5], [0.4, -15], [0.7, 30], [0, 0], [0.2, 10], [0.1, 50], [0.3, 30], [0.4, -15], [0.1, 50], [0.7, 30]];
     var sub_position = [[4, 0], [0, 2], [6, 3], [4, 6], [0, 6], [6, 5], [0, 4], [0, 0], [6, 0], [6, 1], [2, 6], [2, 0]]
-    var sub_types = ["У нас было..", "Инглиш", "Верните мой мезозой", "{{text}}", "Каков шанс сдать ЕГЭ?", "Кто-кто?", "А Ньютоном по лицу?", "Татары злопамятны", "USB флешки на стол!", "{{text}}", "Татары злопамятны", "Каков шанс сдать ЕГЭ?"];
+    var sub_types = ["У нас было..", "Птичий язык", "Верните мой мезозой", "{{text}}", "Каков шанс сдать ЕГЭ?", "Кто-кто?", "E = mc^2", "Татары злопамятны", "USB флешки на стол!", "{{text}}", "Татары злопамятны", "Каков шанс сдать ЕГЭ?"];
     var sub_info = ["...2 мешка травы, 75 таблеток мисколина, 5 марок мощнейшей кислоты, пол солонки кокаина...", "Jjsfj jsjfa oasfj asfj safjaj asfjjqj afsasf kaskfas kasf kasf kassafkm",
-                    "Одна история офигеннее другой", "{{description}}", "Правило какашки запомнится на всю жизнь...", "Ты видишь физру? Нет. И я не вижу, а она есть", "Дифференцируемый импенданс конденсатора при параллельном подключении в сети с переменным током 50Гц?",
+                    "Одна история офигеннее другой", "{{description}}", "Правило какашки запомнится на всю жизнь...", "Ты видишь физру? Нет. И я не вижу, а она есть", "Дифференцируемый импенданс конденсатора при параллельном подключении в сеть с переменным током 50Гц?",
                     "Сожмись и молись, что бы тебя не спросили", "Или вы выверните карманы, или я выверну вас", "{{description}}", "Сожмись и молись, что бы тебя не спросили", "Правило какашки запомнится на всю жизнь..."];
     for (var i = 0; i < sub_images.length; ++i) {
         var img = new Image();
