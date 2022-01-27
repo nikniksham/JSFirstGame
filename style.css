@@ -30,5 +30,5 @@ body {
     border-radius: 15px;
     background: #1a272f;
     box-shadow: 0 0 5px #00A7FF;
-    cursor: url(/img/cursor.png), none;
+    cursor: url(img/cursor.png), none;
 }
