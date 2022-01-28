@@ -1,9 +1,19 @@
 const SPIN = new function () {
-    let SPIN = this, cnv, ctx, width, height, nodes = [], for_destroy = {}, node_count = 0, down_keys = {}, timer = 0, user_draw;
-    var img = new Image();
-    var mouse_x = 0, mouse_y = 0, offset_x = 0, offset_y = 0;
-    img.src = "img/Board.png";
-
+    let SPIN = this, cnv, ctx, width, height, nodes = [], for_destroy = {}, node_count = 0, down_keys = {}, timer = 0, card_move = false, cells = [];
+    var mouse_x = 0, mouse_y = 0, offset_x = 0, offset_y = 0, is_pressed = false;
+    var card_title = ["Альтаировский гамбит", "Вышибалы", "Козырь", "Тихий час", "Рискни здоровьем"];
+    var card_info = ["А вы доверяете своему тактическому гению?", "Береги голову", "Ты что, крейзи?", "Опять отдыхать", "НЕ ПОРТИТЕ ОБОРУДОВАНИЕ ТЕХНОПАРКА!"];
+    var card_functions = [(person) => {(Math.random() < 0.5 ? person.damage(5) : person.damage(-5));},
+                          (person) => {person.damage(-20);},
+                          (person) => {person.home_task = true;},
+                          (person) => {person.damage(-10);},
+                          (person) => {(Math.random() < 0.5 ? person.ne_portite_damage(15) : null);}];
+    var card_images = [new Image(), new Image(), new Image(), new Image(), new Image()];
+    card_images[0].src = "img/items/Chess.png";
+    card_images[1].src = "img/items/Tenis.png";
+    card_images[2].src = "img/items/Homework.png";
+    card_images[3].src = "img/items/Peremena.png";
+    card_images[4].src = "img/items/Destroy.png";
     let $ = (id) => {return document.getElementById(id)};
 
     let drawText = (x, y, clr, text) => {
@@ -18,10 +28,6 @@ const SPIN = new function () {
 
     let drawImage = (image, x, y) => {
         ctx.drawImage(image, x, y);
-    };
-
-    SPIN.set_draw = (f) => {
-        user_draw = f;
     };
 
     class Node {
@@ -75,7 +81,7 @@ const SPIN = new function () {
                 if (this.title == "shmon") {
                     person.shmon_damage(this.damage);
                 } else {
-                    person.damage((home_task ? Math.abs(this.damage) : this.damage));
+                    person.damage((home_task ? -Math.abs(this.damage) : this.damage));
                 }
             }
         }
@@ -98,18 +104,130 @@ const SPIN = new function () {
                     break;
                 }
             }
-        };
+        }
 
     }
 
     class Card extends Node {
-        constructor (x, y, w, h, img, type, update, func) {
+        constructor (x, y, w, h, img, type, update, func, title, info) {
+            x = x * 150 + 69;
+            y = y * 150 + 53;
             super(x, y, w, h, img, type, update);
+            this.func = func;
+            this.title = title;
+            this.info = info;
+            this.start_x = x;
+            this.start_y = y;
+            this.on_move = false;
+            this.move_offset_x = 0;
+            this.move_offset_y = 0;
+            this.cell = null;
+        }
 
+        move(mouse_x, mouse_y, is_pressed) {
+            if (this.on_move) {
+                if (is_pressed) {
+                    this.x = mouse_x - this.move_offset_x;
+                    this.y = mouse_y - this.move_offset_y;
+                } else {
+                    this.on_move = false;
+                    card_move = false;
+                    this.x = this.start_x;
+                    this.y = this.start_y;
+                    var f = false;
+                    for (var i = 0; i < cells.length; ++i) {
+                        if (cells[i].mouse_intersect(mouse_x, mouse_y)) {
+                            console.log(this.set_cell(cells[i]));
+                            break;
+                        }
+                    }
+                }
+            } else {
+                if (is_pressed && this.mouse_intersect(mouse_x, mouse_y)) {
+                    this.on_move = true;
+                    card_move = true;
+                    this.move_offset_x = mouse_x - this.start_x;
+                    this.move_offset_y = mouse_y - this.start_y;
+                }
+            }
+        }
 
+        set_cell(cell) {
+            if (cell != this.cell) {
+                if (cell.is_free) {
+                    if (this.cell) {
+                        this.cell.is_free = true;
+                        this.cell.obj = null;
+                    }
+                    cell.is_free = false;
+                    cell.obj = this;
+                    this.cell = cell;
+                    this.x = cell.x;
+                    this.y = cell.y;
+                    this.start_x = cell.x;
+                    this.start_y = cell.y;
+                } else {
+                    if (this.cell) {
+                        this.cell.is_free = true;
+                        this.cell.obj = null;
+                    }
+                    cell.obj.set_cell(this.cell);
+                    this.cell = null;
+                    this.set_cell(cell);
+                }
+            return true;
+            } else {
+                return false
+            }
+
+        }
+
+        show_info() {
+            drawText(220, 360, "#ffffff", this.title);
+            var ln = 0;
+            var mxl = 43;
+            var sy = 400;
+            while (true) {
+                if (this.info.length - ln > mxl) {
+                    drawText(220, sy, "#ffffff", this.info.substr(ln, mxl));
+                    sy += 30;
+                    ln += mxl;
+                } else {
+                    drawText(220, sy, "#ffffff", this.info.substr(ln, this.info.length - ln));
+                    break;
+                }
+            }
+        }
+
+        mouse_intersect(mouse_x, mouse_y) {
+            return !(this.x + this.w < mouse_x || this.y + this.h < mouse_y || this.x > mouse_x || this.y > mouse_y);
+        }
+
+        destroy() {
+            for_destroy[this.id] = this;
+            if (this.cell) {
+                this.cell.obj = null;
+                this.cell.is_free = true;
+            }
         }
     }
 
+    class Cell {
+        constructor(x, y, w, h) {
+            this.x = x * 150 + 69;
+            this.y = y * 150 + 53;
+            this.w = w;
+            this.h = h;
+            this.is_free = true;
+            this.obj = null
+            cells.push(this);
+//            console.log("Я родился на " + this.x + " " + this.y);
+        }
+
+        mouse_intersect(mouse_x, mouse_y) {
+            return !(this.x + this.w < mouse_x || this.y + this.h < mouse_y || this.x > mouse_x || this.y > mouse_y);;
+        }
+    }
     SPIN.create_node = (x, y, w, h, img, type, update) => {
         return new Node(x, y, w, h, img, type, update);
     };
@@ -118,25 +236,62 @@ const SPIN = new function () {
         return new Subject(x, y, w, h, img, type, title, update, damage, chance, info);
     };
 
+    SPIN.create_card = (card_id) => {
+        var obj = new Card(1, 3, 112, 144, card_images[card_id], "card", null, card_functions[card_id], card_title[card_id], card_info[card_id]), tmp_obj = null;
+        if (cells[cells.length - 1].obj) {
+            cells[cells.length - 1].obj.destroy();
+        }
+        for (var i = 2; i < cells.length; ++i) {
+            tmp_obj = cells[i].obj;
+            if (obj) {
+                cells[i].is_free = false;
+                cells[i].obj = obj;
+                obj.x = cells[i].x;
+                obj.y = cells[i].y;
+                obj.start_x = cells[i].x;
+                obj.start_y = cells[i].y;
+                obj.cell = cells[i];
+            } else {
+                cells[i].is_free = true;
+            }
+            obj = tmp_obj;
+        }
+    };
+
+    SPIN.create_cell = (x, y) => {
+        return new Cell(x, y, 112, 144);
+    };
+
     SPIN.update = () => {
         ctx.clearRect(0, 0, width, height);
         for (let i = nodes.length - 1; i > -1; --i) {
-            if (for_destroy[nodes[i].id]) {
-                nodes.splice(i, 1);
-                continue;
-            } else if (nodes[i].type == "subject" && nodes[i].mouse_intersect(mouse_x, mouse_y)) {
-                nodes[i].show_info()
+            if (nodes[i].type != "card" && nodes[i].type != "person") {
+                if (for_destroy[nodes[i].id]) {
+                    nodes.splice(i, 1);
+                    continue;
+                } else if (nodes[i].type == "subject" && nodes[i].mouse_intersect(mouse_x, mouse_y) && !card_move) {
+                    nodes[i].show_info();
+                }
+                nodes[i]._update();
+                nodes[i].draw();
             }
-            nodes[i]._update();
-            nodes[i].draw();
         }
-        if (user_draw) {
-            user_draw(SPIN);
+        for (let i = nodes.length - 1; i > -1; --i) {
+            if (nodes[i].type == "card" || nodes[i].type == "person") {
+                if (for_destroy[nodes[i].id]) {
+                    nodes.splice(i, 1);
+                    continue;
+                } else if (nodes[i].type == "card" && (!card_move || nodes[i].on_move)) {
+                    nodes[i].move(mouse_x, mouse_y, is_pressed);
+                    if (nodes[i].mouse_intersect(mouse_x, mouse_y)) {nodes[i].show_info();}
+                }
+                nodes[i]._update();
+                nodes[i].draw();
+            }
         }
         // ctx.drawImage(img, 0, 0);
         requestAnimationFrame(SPIN.update);
         timer++;
-        // console.log(offset_x, offset_y);
     };
 
     SPIN.key = (key) => {
@@ -178,14 +333,17 @@ const SPIN = new function () {
         });
 
         addEventListener('mousemove', (event) => {
-            // на какую клавишу ткнули
             mouse_x = event.clientX - offset_x;
             mouse_y = event.clientY - offset_y;
         });
 
 
-        addEventListener('mousemove', (event) => {
-            // TODO: something with click
+        addEventListener('mousedown', (event) => {
+            is_pressed = true;
+        });
+
+        addEventListener('mouseup', (event) => {
+            is_pressed = false;
         });
 
         SPIN.update();
@@ -206,11 +364,23 @@ window.addEventListener('load', function() {
         img.src = "img/cells/" + sub_images[i];
         SPIN.create_subject(sub_position[i][0], sub_position[i][1], 150, 150, img, "subject", sub_types[i], null, sub_damage[i][0], sub_damage[i][1], sub_info[i]);
     }
-
+    var cell_coords = [[1, 1], [2, 1], [1, 3], [2, 3], [3, 3], [4, 3], [1, 4], [2, 4], [3, 4], [4, 4]];
+    for (var i = 0; i < cell_coords.length; ++i) {
+        SPIN.create_cell(cell_coords[i][0], cell_coords[i][1]);
+    }
+    SPIN.create_card(2);
+    SPIN.create_card(1);
+    SPIN.create_card(3);
+    SPIN.create_card(0);
+    SPIN.create_card(1);
+    SPIN.create_card(3);
+    SPIN.create_card(0);
+    SPIN.create_card(1);
+    SPIN.create_card(3);
+    SPIN.create_card(0);
     var img = new Image();
     img.src = "img/Board.png";
     SPIN.create_node(0, 0, 1050, 1050, img, "board", null);
-
     // var img = new Image();
     // img.src = "img/Board.png";
 });
