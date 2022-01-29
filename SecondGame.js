@@ -1,8 +1,9 @@
 const SPIN = new function () {
     let SPIN = this, cnv, ctx, width, height, nodes = [], for_destroy = {}, node_count = 0, down_keys = {}, timer = 0, card_move = false, cells = [];
-    var mouse_x = 0, mouse_y = 0, offset_x = 0, offset_y = 0, is_pressed = false;
-    var card_title = ["Альтаировский гамбит", "Вышибалы", "Козырь", "Тихий час", "Рискни здоровьем"];
-    var card_info = ["А вы доверяете своему тактическому гению?", "Береги голову", "Ты что, крейзи?", "Опять отдыхать", "НЕ ПОРТИТЕ ОБОРУДОВАНИЕ ТЕХНОПАРКА!"];
+    var mouse_x = 0, mouse_y = 0, offset_x = 0, offset_y = 0, scroll_x = 0, scroll_y = 0, is_pressed = false, destr_card = 2;
+    var html = document.documentElement, cursor = document.body.style.cursor;
+    var card_title = ["Альтаировский гамбит", "Угадай, какой загашу", "Козырь", "Опять перемена", "Поднимешь руку на оборудование технопарка?"];
+    var card_info = ["А вы доверяете своему тактическому гению?", "4 стола, 3 ракетки, а мячика нет", "Делать дз? Ты что, крейзи?", "Сложно продолжать спать пока звенит колокольчик", "Тварь я дрожащая или право имею?"];
     var card_functions = [(person) => {(Math.random() < 0.5 ? person.damage(5) : person.damage(-5));},
                           (person) => {person.damage(-20);},
                           (person) => {person.home_task = true;},
@@ -137,7 +138,8 @@ const SPIN = new function () {
                     var f = false;
                     for (var i = 0; i < cells.length; ++i) {
                         if (cells[i].mouse_intersect(mouse_x, mouse_y)) {
-                            console.log(this.set_cell(cells[i]));
+                            this.set_cell(cells[i]);
+                            // console.log(this.set_cell(cells[i]));
                             break;
                         }
                     }
@@ -228,6 +230,132 @@ const SPIN = new function () {
             return !(this.x + this.w < mouse_x || this.y + this.h < mouse_y || this.x > mouse_x || this.y > mouse_y);;
         }
     }
+
+    class Person extends Node {
+        constructor (x, y, w, h, img, type, title, update) {
+            super(x * 150, y * 150, w, h, img, type, update);
+            this.idle_image = img;
+            this.hp = 100;
+            this.speed = 5;
+            this.frame = 0;
+            this.cur_frame = 0;
+            this.need_frame = 0;
+            this.on_move = false;
+            this.is_alive = true;
+            this.some_activity = false;
+            this.cell_x = x;
+            this.cell_y = y;
+            this.front = [];
+            this.back = [];
+            this.left = [];
+            this.right = [];
+        }
+
+        set_images(front, back, left, right) {
+            this.front = [];
+            this.back = [];
+            this.left = [];
+            this.right = [];
+
+            for (var i = 0; i < front.length; ++i) {
+                var img = new Image();
+                img.src = front[i];
+                this.front.push(img);
+            }
+
+            for (var i = 0; i < back.length; ++i) {
+                var img = new Image();
+                img.src = back[i];
+                this.back.push(img);
+            }
+
+            for (var i = 0; i < left.length; ++i) {
+                var img = new Image();
+                img.src = left[i];
+                this.left.push(img);
+            }
+
+            for (var i = 0; i < right.length; ++i) {
+                var img = new Image();
+                img.src = right[i];
+                this.right.push(img);
+            }
+        }
+
+        go_to_next() {
+            if (this.cell_x * 150 == this.x && this.cell_y * 150 == this.y && !this.some_activity) {
+                if (this.cell_x < 6 && cell_y == 0) {
+                    this.cell_x++;
+                } else if (this.cell_x < 6 && cell_y == 6) {
+                    this.cell_x--;
+                } else if (this.cell_y < 6 && cell_x == 0) {
+                    cell_y++;
+                } else if (this.cell_y < 6 && cell_x == 6) {
+                    cell_y--;
+                }
+            }
+        }
+
+        move() {
+            if (this.x > this.cell_x * 150) {
+                this.x = Math.max(this.cell_x * 150, this.x - this.speed);
+                if (this.frame > this.need_frame) {
+                    this.frame = 0;
+                    this.cur_frame++;
+                    if (this.cur_frame >= this.left) { this.cur_frame = 0; }
+                    this.img = this.left[cur_frame];
+                }
+                this.frame++;
+            } else if (this.x < this.cell_x * 150) {
+                this.x = Math.min(this.cell_x * 150, this.x + this.speed);
+            } else if (this.y > this.cell_y * 150) {
+                this.y = Math.max(this.cell_y * 150, this.y - this.speed);
+            } else if (this.y < this.cell_y * 150) {
+                this.y = Math.min(this.cell_y * 150, this.y + this.speed);
+            } else {
+                this.img = this.idle_image;
+            }
+
+        }
+
+        ne_portite_damage(dam) {
+            // TODO: Отрисовывать специальное что-то
+            this.damage(dam);
+        }
+
+        shmon_damage(dam) {
+            n_d_c = 2;
+            for (var i = cells.length - 1; i > -1; --i) {
+                if (cells[i].obj) {
+                    n_d_c--;
+                    cells[i].obj.destroy();
+                }
+                if (n_d_c <= 0) {
+                    break;
+                }
+            }
+            this.damage(dam, true);
+        }
+
+        damage(dam, fr_sh = false) {
+            this.hp -= dam;
+            if (this.hp <= 0) {
+                this.is_alive = true;
+            } else if (!fr_sh) {
+                var id = 0, count = 0;
+                while (count < 1) {
+                    id = getRandomInt(5);
+                    if (destr_card > 0 && destr_card > 0) {
+                        destr_card--;
+                    } else {
+                        continue;
+                    }
+                    SPIN.create_card(id);
+                }
+            }
+        }
+    }
+
     SPIN.create_node = (x, y, w, h, img, type, update) => {
         return new Node(x, y, w, h, img, type, update);
     };
@@ -277,11 +405,11 @@ const SPIN = new function () {
             }
         }
         for (let i = nodes.length - 1; i > -1; --i) {
-            if (nodes[i].type == "card" || nodes[i].type == "person") {
+            if ((nodes[i].type == "card" && !nodes[i].on_move) || nodes[i].type == "person") {
                 if (for_destroy[nodes[i].id]) {
                     nodes.splice(i, 1);
                     continue;
-                } else if (nodes[i].type == "card" && (!card_move || nodes[i].on_move)) {
+                } else if (nodes[i].type == "card" && !card_move) {
                     nodes[i].move(mouse_x, mouse_y, is_pressed);
                     if (nodes[i].mouse_intersect(mouse_x, mouse_y)) {nodes[i].show_info();}
                 }
@@ -289,7 +417,23 @@ const SPIN = new function () {
                 nodes[i].draw();
             }
         }
-        // ctx.drawImage(img, 0, 0);
+
+        for (let i = nodes.length - 1; i > -1; --i) {
+            if (nodes[i].type == "card") {
+                if (for_destroy[nodes[i].id]) {
+                    nodes.splice(i, 1);
+                    continue;
+                } else if (nodes[i].on_move) {
+                    nodes[i].move(mouse_x, mouse_y, is_pressed);
+                    if (nodes[i].mouse_intersect(mouse_x, mouse_y)) {nodes[i].show_info();}
+                    nodes[i]._update();
+                    nodes[i].draw();
+                }
+            }
+        }
+        document.getElementById("cnv").style.cursor = (is_pressed ? "url('img/cursorPressed.png'), auto" : "url('img/cursor.png'), auto");
+        // console.log(document.getElementById("cnv").style.cursor);
+        // console.log(document.body.style.cursor);
         requestAnimationFrame(SPIN.update);
         timer++;
     };
@@ -333,10 +477,15 @@ const SPIN = new function () {
         });
 
         addEventListener('mousemove', (event) => {
-            mouse_x = event.clientX - offset_x;
-            mouse_y = event.clientY - offset_y;
+            mouse_x = event.clientX - offset_x + scroll_x;
+            mouse_y = event.clientY - offset_y + scroll_y;
         });
 
+        addEventListener('scroll', (event) => {
+            scroll_x = html.scrollLeft;
+            scroll_y = html.scrollTop;
+//            console.log("А? " + scroll_x + " " + scroll_y)
+        });
 
         addEventListener('mousedown', (event) => {
             is_pressed = true;
@@ -357,8 +506,8 @@ window.addEventListener('load', function() {
     var sub_position = [[4, 0], [0, 2], [6, 3], [4, 6], [0, 6], [6, 5], [0, 4], [0, 0], [6, 0], [6, 1], [2, 6], [2, 0]]
     var sub_types = ["У нас было..", "Птичий язык", "Верните мой мезозой", "{{text}}", "Каков шанс сдать ЕГЭ?", "Кто-кто?", "E = mc^2", "Татары злопамятны", "USB флешки на стол!", "{{text}}", "Татары злопамятны", "Каков шанс сдать ЕГЭ?"];
     var sub_info = ["...2 мешка травы, 75 таблеток мисколина, 5 марок мощнейшей кислоты, пол солонки кокаина...", "Jjsfj jsjfa oasfj asfj safjaj asfjjqj afsasf kaskfas kasf kasf kassafkm",
-                    "Одна история офигеннее другой", "{{description}}", "Правило какашки запомнится на всю жизнь...", "Ты видишь физру? Нет. И я не вижу, а она есть", "Дифференцируемый импенданс конденсатора при параллельном подключении в сеть с переменным током 50Гц?",
-                    "Сожмись и молись, что бы тебя не спросили", "Или вы выверните карманы, или я выверну вас", "{{description}}", "Сожмись и молись, что бы тебя не спросили", "Правило какашки запомнится на всю жизнь..."];
+                    "Одна история офигеннее другой", "{{description}}", "Вы знаете, чем учителя отличаются от педофилов? *первый урок математики*", "Ты видишь физру? Нет. И я не вижу, а она есть", "Дифференцируемый импенданс конденсатора при параллельном подключении в сеть с переменным током 50Гц?",
+                    "Сожмись и молись, что бы тебя не спросили", "Или вы выверните карманы, или я выверну вас", "{{description}}", "Сожмись и молись, что бы тебя не спросили", "Вы знаете, чем учителя отличаются от педофилов? *первый урок математики*"];
     for (var i = 0; i < sub_images.length; ++i) {
         var img = new Image();
         img.src = "img/cells/" + sub_images[i];
@@ -368,16 +517,16 @@ window.addEventListener('load', function() {
     for (var i = 0; i < cell_coords.length; ++i) {
         SPIN.create_cell(cell_coords[i][0], cell_coords[i][1]);
     }
-    SPIN.create_card(2);
-    SPIN.create_card(1);
-    SPIN.create_card(3);
-    SPIN.create_card(0);
-    SPIN.create_card(1);
-    SPIN.create_card(3);
-    SPIN.create_card(0);
-    SPIN.create_card(1);
-    SPIN.create_card(3);
-    SPIN.create_card(0);
+//    SPIN.create_card(2);
+//    SPIN.create_card(1);
+//    SPIN.create_card(3);
+//    SPIN.create_card(0);
+//    SPIN.create_card(1);
+//    SPIN.create_card(2);
+//    SPIN.create_card(0);
+//    SPIN.create_card(1);
+//    SPIN.create_card(3);
+//    SPIN.create_card(4);
     var img = new Image();
     img.src = "img/Board.png";
     SPIN.create_node(0, 0, 1050, 1050, img, "board", null);
