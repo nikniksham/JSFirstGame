@@ -5,29 +5,25 @@
 }
 
 body {
+    width: 100%;
+    min-height: 100vh;
+    user-select: none;
+    background: cadetblue;
+}
+
+.game__wrapper {
+    max-width: 1050px;
+    margin: auto;
+}
+
+.game__title {
+    width: 100%;
     text-align: center;
-    padding: 20px;
-    background: #0d0c15;
+    font-family: 'Grenze Gotisch', cursive;
+    font-size: 3rem;
 }
 
-#game {
-    padding: 20px;
-    background: #2b2b2b;
-    color: white;
-    display: inline-block;
-    border-radius: 20px;
-}
-
-#game #title {
-    padding-bottom: 10px;
-    font-size: 30px;
-    color: #00A7FF;
-    font-family: "mv boli";
-    text-shadow: 0 0 5px #0061b0;
-}
-
-#cnv {
-    border-radius: 15px;
-    background: #1a272f;
-    box-shadow: 0 0 5px #00A7FF;
+.game__help {
+    color: black !important;
+    font-size: 2rem;
 }
