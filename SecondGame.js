@@ -246,7 +246,8 @@ const SPIN = new function () {
             super(x * 150, y * 150, w, h, img, type, update);
             this.type = type
             this.idle_image = img;
-                this.hp = 2500;
+            this.max_hp = 2500;
+            this.hp = this.max_hp;
             this.speed = 100;
             this.frame = 0;
             this.cur_frame = 0;
@@ -300,6 +301,12 @@ const SPIN = new function () {
                     if (cells[i].obj) { cells[i].obj.destroy(); }
                 }
                 if (this.cell_x == 6 && this.cell_y == 6) {
+                    for (var i = 0; i < nodes.length; ++i) {
+                        if (nodes[i].type == "subject") {
+                            nodes[i].damage *= 1.1;
+//                            console.log("!!!!!");
+                        }
+                    }
                     this.damage(-50);
                 }
                 this.on_move = true;
@@ -399,7 +406,7 @@ const SPIN = new function () {
                 this.hp -= dam;
             }
 //            this.hp -= ((this.home_task && !fr_sh) ? -Math.abs(this.dam) : this.dam);
-            if (this.hp > 2500) {this.hp = 2500;}
+            if (this.hp > this.max_hp) {this.hp = this.max_hp;}
             if (this.hp < 0) {this.hp = 0;}
             if (this.hp <= 0) {
                 this.is_alive = false;
@@ -482,6 +489,10 @@ const SPIN = new function () {
                 nodes[i].draw();
             }
         }
+
+        rect(495, 245, 390, 60, "#444444");
+        rect(500, 250, 380, 50, "#ffffff");
+
         for (let i = nodes.length - 1; i > -1; --i) {
             if ((nodes[i].type == "card" && !nodes[i].on_move) || nodes[i].type == "person") {
                 if (for_destroy[nodes[i].id]) {
@@ -491,7 +502,8 @@ const SPIN = new function () {
                     nodes[i].move(mouse_x, mouse_y, is_pressed);
                     if (nodes[i].mouse_intersect(mouse_x, mouse_y)) {nodes[i].show_info();}
                 } else if (nodes[i].type == "person") {
-//                    console.log("I'm here " + down_keys["KeyG"]);
+                    rect(500, 250, 380 * nodes[i].hp / nodes[i].max_hp, 50, "#ff0000");
+//                  console.log("I'm here " + down_keys["KeyG"]);
                     if (!nodes[i].some_activity && nodes[i].is_alive) {
                         if (nodes[i].on_move) {
                             nodes[i].move();
@@ -520,7 +532,7 @@ const SPIN = new function () {
         }
 
 //        console.log(document.getElementById("cnv").style.cursor);
-//        document.getElementById("cnv").style.cursor = (is_pressed ? "url('img/cursorPressed.png'), auto" : "url('img/cursor.png'), auto");
+        document.getElementById("cnv").style.cursor = (is_pressed ? "url('img/cursorPressed.png'), auto" : "url('img/cursor.png'), auto");
         // console.log(document.body.style.cursor);
         requestAnimationFrame(SPIN.update);
         timer++;
