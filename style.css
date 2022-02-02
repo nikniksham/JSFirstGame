@@ -9,6 +9,8 @@ body {
     min-height: 100vh;
     user-select: none;
     background: cadetblue;
+    font-size: 2rem;
+    font-family: 'Open Sans', sans-serif;
 }
 
 .game__wrapper {
@@ -30,4 +32,30 @@ body {
 
 #cnv {
     cursor: url(img/cursor.png), none;
+}
+
+.container {
+    max-width: 1050px;
+    margin: auto;
+}
+
+.help__title {
+    width: 100%;
+    text-align: center;
+}
+
+.help__back {
+    color: black !important;
+}
+
+details {
+    padding: 20px 0;
+}
+
+a:focus-visible, details:focus-visible, summary:focus-visible {
+    outline: none;
+}
+
+details pre, details p {
+    padding-left: 35px;
 }
