@@ -7,14 +7,14 @@ const SPIN = new function () {
     let ne_portite_image_func = (person) => {
         var img = new Image();
         img.src = "img/DontDestroy.png";
-        SPIN.create_node(50 + Math.random() * 650, 900, 350, 160, img, "popup", (node) => {node.y -= 5; if (node.y - this.h < 0) {node.destroy()}});
+        SPIN.create_node(50 + Math.random() * 650, 900, 350, 160, img, "popup", (node) => {node.y -= 3; if (node.y - this.h < 0) {node.destroy()}});
         person.ne_portite_damage(50);
     }
 
     let confiscation = (person) => {
         var img = new Image();
         img.src = "img/Confiscation.png";
-        SPIN.create_node(50 + Math.random() * 650, 900, 350, 160, img, "popup", (node) => {node.y -= 5; if (node.y - this.h < 0) {node.destroy()}});
+        SPIN.create_node(50 + Math.random() * 650, 900, 350, 160, img, "popup", (node) => {node.y -= 3; if (node.y - this.h < 0) {node.destroy()}});
     }
 
     var card_title = ["Альтаировский гамбит", "Угадай, какой загашу", "Домашняя работа", "Опять перемена", "Поднимешь руку на оборудование технопарка?"];
@@ -270,10 +270,10 @@ const SPIN = new function () {
             this.idle_image = img;
             this.max_hp = 250;
             this.hp = this.max_hp;
-            this.speed = 6;
+            this.speed = 5;
             this.frame = 0;
             this.cur_frame = 0;
-            this.need_frame = 6;
+            this.need_frame = 7;
             this.on_move = false;
             this.is_alive = true;
             this.some_activity = false;
