@@ -1,14 +1,23 @@
 const SPIN = new function () {
     let SPIN = this, cnv, ctx, width, height, nodes = [], for_destroy = {}, node_count = 0, down_keys = {}, timer = 0, card_move = false, cells = [];
-    var mouse_x = 0, mouse_y = 0, offset_x = 0, offset_y = 0, scroll_x = 0, scroll_y = 0, is_pressed = false, destr_card = 2, cell_id = 0, person;
+    var mouse_x = 0, mouse_y = 0, offset_x = 0, offset_y = 0, scroll_x = 0, scroll_y = 0, is_pressed = false, destr_card = 2, cell_id = 0, person, move_del = false;
     var html = document.documentElement, cursor = document.body.style.cursor;
-    var card_title = ["Альтаировский гамбит", "Угадай, какой загашу", "Математическая математика", "Опять перемена", "Поднимешь руку на оборудование технопарка?"];
-    var card_info = ["А вы доверяете своему тактическому гению?", "4 стола, 3 ракетки, а мячика нет", "Если у тебя нет дз, то это", "Сложно продолжать спать пока звенит колокольчик", "Тварь я дрожащая или право имею?"];
-    var card_functions = [(person) => {(Math.random() < 0.5 ? person.damage(5) : person.damage(-5));},
-                          (person) => {person.damage(-20);},
+    var delete_image = new Image();
+    delete_image.src = "img/cells/Delete.png";
+    let ne_portite_image_func = (person) => {
+        var img = new Image();
+        img.src = "img/DontDestroy.png";
+        SPIN.create_node(50 + Math.random() * 650, 900, 350, 160, img, "popup", (node) => {node.y -= 5; if (node.y - this.h < 0) {node.destroy()}});
+        person.ne_portite_damage(50);
+    }
+    var card_title = ["Альтаировский гамбит", "Угадай, какой загашу", "Домашняя работа", "Опять перемена", "Поднимешь руку на оборудование технопарка?"];
+    var card_info = ["А вы доверяете своему тактическому гению?", "4 стола, 3 ракетки, а мячика нет", "Сомнительный досуг", "Сложно продолжать спать пока звенит колокольчик", "Тварь я дрожащая или право имею?"];
+    var card_types = ["chess", "tennis", "ht", "relax", "delete"];
+    var card_functions = [(person) => {(Math.random() < 0.5 ? person.damage(5, true) : person.damage(-5, true));},
+                          (person) => {person.damage(-20, true);},
                           (person) => {person.home_task = true;},
-                          (person) => {person.damage(-10);},
-                          (person) => {(Math.random() < 0.5 ? person.ne_portite_damage(15) : null);}];
+                          (person) => {person.damage(-10, true);},
+                          (person) => {ne_portite_image_func(person)}];
     var card_images = [new Image(), new Image(), new Image(), new Image(), new Image()];
     card_images[0].src = "img/items/Chess.png";
     card_images[1].src = "img/items/Tenis.png";
@@ -65,24 +74,15 @@ const SPIN = new function () {
     }
 
     class Subject extends Node {
-        constructor (x, y, w, h, img, type, title, update, damage, chance, info) {
-            super(x * 150, y * 150, w, h, img, type, update);
+        constructor (x, y, w, h, img, type, title, update, damage, chance, info, sub_type) {
+            super(x * 150, y * 150, w, h, img, type, update, sub_type);
             this.damage = damage;
             this.chance = chance;
             this.info = info;
             this.title = title;
+            this.sub_type = sub_type;
         }
 
-        study(person) {
-            if (Math.random() < this.chance) {
-                if (this.title == "USB флешки на стол!") {
-                    person.shmon_damage(this.damage);
-                } else {
-//                    console.log(person.home_task);
-                    person.damage((person.home_task ? -Math.abs(this.damage) : this.damage));
-                }
-            }
-        }
         mouse_intersect(mouse_x, mouse_y) {
             return !(this.x + this.w < mouse_x || this.y + this.h < mouse_y || this.x > mouse_x || this.y > mouse_y);
         }
@@ -107,11 +107,12 @@ const SPIN = new function () {
     }
 
     class Card extends Node {
-        constructor (x, y, w, h, img, type, update, func, title, info) {
+        constructor (x, y, w, h, img, type, update, func, title, info, card_type) {
             x = x * 150 + 69;
             y = y * 150 + 53;
             super(x, y, w, h, img, type, update);
             this.func = func;
+            this.card_type = card_type;
             this.title = title;
             this.info = info;
             this.start_x = x;
@@ -128,8 +129,19 @@ const SPIN = new function () {
                     this.x = mouse_x - this.move_offset_x;
                     this.y = mouse_y - this.move_offset_y;
                 } else {
+                    move_del = false;
                     this.on_move = false;
-                    card_move = false;
+                    if (this.card_type == "delete") {
+                        card_move = false;
+                        for (var i = 0; i < nodes.length; ++i) {
+                            if (nodes[i].type == "subject" && nodes[i].sub_type != "Shmon" && nodes[i].mouse_intersect(mouse_x, mouse_y)) {
+                                nodes[i].destroy();
+                                this.func(person);
+                                this.destroy();
+                                break
+                            }
+                        }
+                    }
                     this.x = this.start_x;
                     this.y = this.start_y;
                     var f = false;
@@ -143,6 +155,9 @@ const SPIN = new function () {
                 }
             } else {
                 if (is_pressed && this.mouse_intersect(mouse_x, mouse_y)) {
+                    if (this.card_type == "delete") {
+                        move_del = true;
+                    }
                     this.on_move = true;
                     card_move = true;
                     this.move_offset_x = mouse_x - this.start_x;
@@ -152,7 +167,7 @@ const SPIN = new function () {
         }
 
         set_cell(cell) {
-            if (cell != this.cell) {
+            if (cell != this.cell && !(cell.cell_id in [0, 1] && this.card_type == "delete")) {
 //                console.log("New operation");
 //                console.log(this.cell + " && " + (this.cell && this.cell.cell_id in [0, 1]) + " || " + (cell.cell_id in [0, 1]) + " && " + cell.obj)
                 var f = (cell.cell_id in [0, 1])
@@ -365,7 +380,7 @@ const SPIN = new function () {
                     for (var i = 0; i < nodes.length; ++i) {
                         if (nodes[i].type == "subject") {
                             if (this.x == nodes[i].x && this.y == nodes[i].y && Math.random() < nodes[i].chance) {
-                                if (nodes[i].title == "USB флешки на стол!") {
+                                if (nodes[i].sub_type == "Shmon") {
                                     this.shmon_damage(nodes[i].damage);
                                 } else {
                                     this.damage(nodes[i].damage);
@@ -382,7 +397,7 @@ const SPIN = new function () {
 
         ne_portite_damage(dam) {
             // TODO: Отрисовывать специальное что-то
-            this.damage(dam);
+            this.damage(dam, true);
         }
 
         shmon_damage(dam) {
@@ -422,10 +437,11 @@ const SPIN = new function () {
                         }
                     }
                     SPIN.create_card(id);
+//                    SPIN.create_card(4);
                     count++;
                 }
             }
-        console.log("HP: " + this.hp);
+//        console.log("HP: " + this.hp);
         }
     }
 
@@ -433,15 +449,15 @@ const SPIN = new function () {
         return new Node(x, y, w, h, img, type, update);
     };
 
-    SPIN.create_subject = (x, y, w, h, img, type, title, update, damage, chance, info) => {
-        return new Subject(x, y, w, h, img, type, title, update, damage, chance, info);
+    SPIN.create_subject = (x, y, w, h, img, type, title, update, damage, chance, info, sub_type) => {
+        return new Subject(x, y, w, h, img, type, title, update, damage, chance, info, sub_type);
     };
 
     SPIN.create_card = (card_id) => {
         var f = true;
         for (var i = 2; i < cells.length; ++i) {
             if (!cells[i].obj) {
-                var obje = new Card(1, 3, 112, 144, card_images[card_id], "card", null, card_functions[card_id], card_title[card_id], card_info[card_id]);
+                var obje = new Card(1, 3, 112, 144, card_images[card_id], "card", null, card_functions[card_id], card_title[card_id], card_info[card_id], card_types[card_id]);
                 obje.set_cell(cells[i]);
                 f = false;
                 break;
@@ -478,12 +494,18 @@ const SPIN = new function () {
     SPIN.update = () => {
         ctx.clearRect(0, 0, width, height);
         for (let i = nodes.length - 1; i > -1; --i) {
-            if (nodes[i].type != "card" && nodes[i].type != "person") {
+            if (nodes[i].type != "card" && nodes[i].type != "person" && nodes[i].type != "popup") {
                 if (for_destroy[nodes[i].id]) {
                     nodes.splice(i, 1);
                     continue;
-                } else if (nodes[i].type == "subject" && nodes[i].mouse_intersect(mouse_x, mouse_y) && !card_move) {
-                    nodes[i].show_info();
+                } else if (nodes[i].type == "subject") {
+                    if (nodes[i].mouse_intersect(mouse_x, mouse_y) && !card_move) {
+                        nodes[i].show_info();
+                    }
+                    if (nodes[i].sub_type != "Shmon" && move_del) {
+//                        console.log("Ну рисуй");
+                        drawImage(delete_image, nodes[i].x, nodes[i].y);
+                    }
                 }
                 nodes[i]._update();
                 nodes[i].draw();
@@ -519,6 +541,17 @@ const SPIN = new function () {
         }
 
         for (let i = nodes.length - 1; i > -1; --i) {
+            if (nodes[i].type == "popup") {
+                if (for_destroy[nodes[i].id]) {
+                    nodes.splice(i, 1);
+                    continue;
+                }
+                nodes[i]._update();
+                nodes[i].draw();
+            }
+        }
+
+        for (let i = nodes.length - 1; i > -1; --i) {
             if (nodes[i].type == "card") {
                 if (for_destroy[nodes[i].id]) {
                     nodes.splice(i, 1);
@@ -532,11 +565,11 @@ const SPIN = new function () {
             }
         }
 
-//        console.log(document.getElementById("cnv").style.cursor);
-        document.getElementById("cnv").style.cursor = (is_pressed ? "url('img/cursorPressed.png'), auto" : "url('img/cursor.png'), auto");
-        // console.log(document.body.style.cursor);
-        requestAnimationFrame(SPIN.update);
-        timer++;
+//      console.log(document.getElementById("cnv").style.cursor);
+      document.getElementById("cnv").style.cursor = (is_pressed ? "url('img/cursorPressed.png'), auto" : "url('img/cursor.png'), auto");
+      // console.log(document.body.style.cursor);
+      requestAnimationFrame(SPIN.update);
+      timer++;
     };
 
     SPIN.key = (key) => {
@@ -596,6 +629,8 @@ const SPIN = new function () {
 
         addEventListener('mouseup', (event) => {
             is_pressed = false;
+            card_move = false;
+            move_del = false;
         });
 
         SPIN.update();
@@ -607,14 +642,15 @@ window.addEventListener('load', function() {
     var sub_images = ["Chemistry.png", "English.png", "History.png", "Informatic.png", "Math.png", "PE.png", "Physics.png", "Russian.png", "Shmon.png", "Informatic.png", "Russian.png", "Math.png"];
     var sub_damage = [[0.8, 10], [0.4, 15], [0.2, -5], [0.2, -15], [0.6, 30], [0, 0], [0.7, 10], [0.1, 60], [0.5, 30], [0.2, -15], [0.1, 60], [0.6, 30]];
     var sub_position = [[4, 0], [0, 2], [6, 3], [4, 6], [0, 6], [6, 5], [0, 4], [0, 0], [6, 0], [6, 1], [2, 6], [2, 0]]
-    var sub_types = ["ГДЕ ЛАБОРАТОРНЫЕ РАБОТЫ?!", "Эти диалоги в этом прекрасном качестве", "Верните мой мезозой", "{{text}}", "Каков шанс сдать ЕГЭ?", "Кто-кто?", "E = mc^2", "Татары злопамятны", "USB флешки на стол!", "{{text}}", "Татары злопамятны", "Каков шанс сдать ЕГЭ?"];
+    var sub_types = ["Chemistry", "English", "History", "IT", "Math", "Idk", "Physic", "Russian", "Shmon", "IT", "Russian", "Math"]
+    var sub_titles = ["Где лабораторные работы?", "Эти диалоги в этом прекрасном качестве", "Верните мой мезозой", "{{text}}", "Каков шанс сдать ЕГЭ?", "Кто-кто?", "E = mc^2", "Татары злопамятны", "USB флешки на стол!", "{{text}}", "Татары злопамятны", "Каков шанс сдать ЕГЭ?"];
     var sub_info = ["У нас было 2 мешка травы, 75 таблеток мисколина, 5 марок мощнейшей кислоты, пол солонки кокаина...", "Jjsfj jsjfa oasfj asfj safjaj asfjjqj afsasf kaskfas kasf kasf kassafkm",
                     "Одна история офигеннее другой", "{{description}}", "Вы знаете, чем учителя отличаются от педофилов? *первый урок математики*", "Ты видишь физру? Нет. И я не вижу, а она есть", "Дифференцируемый импенданс конденсатора при параллельном подключении в сеть с переменным током 50Гц?",
                     "Сожмись и молись, что бы тебя не спросили", "Или вы выверните карманы, или я выверну вас", "{{description}}", "Сожмись и молись, что бы тебя не спросили", "Вы знаете, чем учителя отличаются от педофилов? *первый урок математики*"];
     for (var i = 0; i < sub_images.length; ++i) {
         var img = new Image();
         img.src = "img/cells/" + sub_images[i];
-        SPIN.create_subject(sub_position[i][0], sub_position[i][1], 150, 150, img, "subject", sub_types[i], null, sub_damage[i][1], sub_damage[i][0], sub_info[i]);
+            SPIN.create_subject(sub_position[i][0], sub_position[i][1], 150, 150, img, "subject", sub_titles[i], null, sub_damage[i][1], sub_damage[i][0], sub_info[i], sub_types[i]);
     }
     var cell_coords = [[1, 1], [2, 1], [1, 3], [2, 3], [3, 3], [4, 3], [1, 4], [2, 4], [3, 4], [4, 4]];
     for (var i = 0; i < cell_coords.length; ++i) {
