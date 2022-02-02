@@ -449,7 +449,7 @@ const SPIN = new function () {
                 } else if (!fr_sh && !this.home_task) {  // && Math.random() > 0.5
                     var id = 0, count = 0;
                     while (count < 1 && dam > 0) {
-                        id = Math.floor(Math.random() * 4.1);
+                        id = Math.floor(Math.random() * 4.4);
                         if (id == 4) {
                             if (destr_card > 0) {
                                 destr_card--;
