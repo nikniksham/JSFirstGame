@@ -1,6 +1,6 @@
 const SPIN = new function () {
     let SPIN = this, cnv, ctx, width, height, nodes = [], for_destroy = {}, node_count = 0, down_keys = {}, timer = 0, card_move = false, cells = [];
-    var mouse_x = 0, mouse_y = 0, offset_x = 0, offset_y = 0, scroll_x = 0, scroll_y = 0, is_pressed = false, destr_card = 2, cell_id = 0, person, move_del = false;
+    var mouse_x = 0, mouse_y = 0, offset_x = 0, offset_y = 0, scroll_x = 0, scroll_y = 0, is_pressed = false, destr_card = 2, cell_id = 0, person, move_del = false, spin = 0;
     var html = document.documentElement, cursor = document.body.style.cursor;
     var delete_image = new Image();
     delete_image.src = "img/cells/Delete.png";
@@ -261,7 +261,7 @@ const SPIN = new function () {
             super(x * 150, y * 150, w, h, img, type, update);
             this.type = type
             this.idle_image = img;
-            this.max_hp = 250;
+            this.max_hp = 10;
             this.hp = this.max_hp;
             this.speed = 100;
             this.frame = 0;
@@ -310,15 +310,28 @@ const SPIN = new function () {
             }
         }
 
+        die() {
+            this.is_alive = false;
+            this.some_activity = true;
+            this.idle_image = new Image();
+            this.idle_image.src = "img/hero/Die.png";
+            var gif_frames = ["img/hero/Sleep1.png", "img/hero/Sleep2.png", "img/hero/Sleep3.png", "img/hero/Sleep4.png", "img/hero/Sleep5.png", "img/hero/Sleep6.png"]
+            SPIN.create_gif(600, 400, 600, 600, (node) => {if (node.tick > 60) {node.tick = 0; node.frame++; if (node.frame >= node.imgs.length) {node.frame = 0;}} node.img = node.imgs[node.frame]; node.tick++;}, gif_frames);
+            var img = new Image();
+            img.src = "img/die-pop-up.png";
+            SPIN.create_node(0, 188, 1050, 675, img, "final", null);
+        }
+
         go_to_next() {
             if (this.cell_x * 150 == this.x && this.cell_y * 150 == this.y && !this.some_activity && !card_move && this.is_alive) {
                 for (var i = 0; i < 2; ++i) {
                     if (cells[i].obj) { cells[i].obj.destroy(); }
                 }
                 if (this.cell_x == 6 && this.cell_y == 6) {
+                    spin += 1;
                     for (var i = 0; i < nodes.length; ++i) {
                         if (nodes[i].type == "subject") {
-                            nodes[i].damage *= 1.05;
+                            nodes[i].damage *= 1.1;
 //                            console.log("!!!!!");
                         }
                     }
@@ -396,7 +409,6 @@ const SPIN = new function () {
         }
 
         ne_portite_damage(dam) {
-            // TODO: Отрисовывать специальное что-то
             this.damage(dam, true);
         }
 
@@ -415,35 +427,56 @@ const SPIN = new function () {
         }
 
         damage(dam, fr_sh = false) {
-            if (this.home_task && !fr_sh) {
-                this.hp += Math.abs(Math.floor(dam / 2 + 0.5));
-            } else {
-                this.hp -= Math.floor(dam + 0.5);
-            }
-//            this.hp -= ((this.home_task && !fr_sh) ? -Math.abs(this.dam) : this.dam);
-            if (this.hp > this.max_hp) {this.hp = this.max_hp;}
-            if (this.hp < 0) {this.hp = 0;}
-            if (this.hp <= 0) {
-                this.is_alive = false;
-            } else if (!fr_sh && !this.home_task) {  // && Math.random() > 0.5
-                var id = 0, count = 0;
-                while (count < 1 && dam > 0) {
-                    id = Math.floor(Math.random() * 4.1);
-                    if (id == 4) {
-                        if (destr_card > 0) {
-                            destr_card--;
-                        } else {
-                            continue;
-                        }
-                    }
-                    SPIN.create_card(id);
-//                    SPIN.create_card(4);
-                    count++;
+            if (this.is_alive) {
+                if (this.home_task && !fr_sh) {
+                    this.hp += Math.abs(Math.floor(dam / 2 + 0.5));
+                } else {
+                    this.hp -= Math.floor(dam + 0.5);
                 }
+    //            this.hp -= ((this.home_task && !fr_sh) ? -Math.abs(this.dam) : this.dam);
+                if (this.hp > this.max_hp) {this.hp = this.max_hp;}
+                if (this.hp < 0) {this.hp = 0; this.die();}
+                if (this.hp <= 0) {
+                    this.is_alive = false;
+                } else if (!fr_sh && !this.home_task) {  // && Math.random() > 0.5
+                    var id = 0, count = 0;
+                    while (count < 1 && dam > 0) {
+                        id = Math.floor(Math.random() * 4.1);
+                        if (id == 4) {
+                            if (destr_card > 0) {
+                                destr_card--;
+                            } else {
+                                continue;
+                            }
+                        }
+                        SPIN.create_card(id);
+    //                    SPIN.create_card(4);
+                        count++;
+                    }
+                }
+    //        console.log("HP: " + this.hp);
             }
-//        console.log("HP: " + this.hp);
         }
     }
+
+    class Gif extends Node {
+        constructor (x, y, w, h, update, imgs) {
+            super(x, y, w, h, imgs[0], "gif", update);
+            this.imgs = [];
+            this.tick = 0;
+            this.frame = 0
+            for (var i = 0; i < imgs.length; ++i) {
+                var img = new Image();
+                img.src = imgs[i];
+                this.imgs.push(img);
+            }
+            this.img = imgs[0];
+        }
+    }
+
+    SPIN.create_gif = (x, y, w, h, update, imgs) => {
+        return new Gif(x, y, w, h, update, imgs);
+    };
 
     SPIN.create_node = (x, y, w, h, img, type, update) => {
         return new Node(x, y, w, h, img, type, update);
@@ -514,7 +547,7 @@ const SPIN = new function () {
 
         rect(495, 245, 390, 60, "#444444");
         rect(500, 250, 380, 50, "#ffffff");
-
+        drawText(620, 210, "#ffffff", "Круг: " + spin);
         for (let i = nodes.length - 1; i > -1; --i) {
             if ((nodes[i].type == "card" && !nodes[i].on_move) || nodes[i].type == "person") {
                 if (for_destroy[nodes[i].id]) {
@@ -565,11 +598,26 @@ const SPIN = new function () {
             }
         }
 
+        if (person && !person.is_alive) {
+            for (let i = nodes.length - 1; i > -1; --i) {
+                if (nodes[i].type == "final" || nodes[i].type == "gif") {
+                    console.log("А?");
+                    if (for_destroy[nodes[i].id]) {
+                        nodes.splice(i, 1);
+                        continue;
+                    }
+                    nodes[i]._update();
+                    nodes[i].draw();
+                }
+            }
+            drawText(30, 320, "#000000", "Ваш результат: Вы смогли прожить " + spin + " дней в школе");
+            drawText(30, 360, "#000000", "А мы тут уже полтора года выживаем!");
+        }
 //      console.log(document.getElementById("cnv").style.cursor);
-      document.getElementById("cnv").style.cursor = (is_pressed ? "url('img/cursorPressed.png'), auto" : "url('img/cursor.png'), auto");
-      // console.log(document.body.style.cursor);
-      requestAnimationFrame(SPIN.update);
-      timer++;
+        document.getElementById("cnv").style.cursor = (is_pressed ? "url('img/cursorPressed.png'), auto" : "url('img/cursor.png'), auto");
+        // console.log(document.body.style.cursor);
+        requestAnimationFrame(SPIN.update);
+//      timer++;
     };
 
     SPIN.key = (key) => {
@@ -643,10 +691,10 @@ window.addEventListener('load', function() {
     var sub_damage = [[0.8, 10], [0.4, 15], [0.2, -5], [0.2, -15], [0.6, 30], [0, 0], [0.7, 10], [0.1, 60], [0.5, 30], [0.2, -15], [0.1, 60], [0.6, 30]];
     var sub_position = [[4, 0], [0, 2], [6, 3], [4, 6], [0, 6], [6, 5], [0, 4], [0, 0], [6, 0], [6, 1], [2, 6], [2, 0]]
     var sub_types = ["Chemistry", "English", "History", "IT", "Math", "Idk", "Physic", "Russian", "Shmon", "IT", "Russian", "Math"]
-    var sub_titles = ["Где лабораторные работы?", "Эти диалоги в этом прекрасном качестве", "Верните мой мезозой", "{{text}}", "Каков шанс сдать ЕГЭ?", "Кто-кто?", "E = mc^2", "Татары злопамятны", "USB флешки на стол!", "{{text}}", "Татары злопамятны", "Каков шанс сдать ЕГЭ?"];
+    var sub_titles = ["Где лабораторные работы?", "Даже Гоблин делал озвучку лучше, чем актёры Starlight", "Верните мой мезозой", "{{text}}", "Каков шанс сдать ЕГЭ?", "Кто-кто?", "E = mc^2", "Татары злопамятны", "Злая тётя", "{{text}}", "Татары злопамятны", "Каков шанс сдать ЕГЭ?"];
     var sub_info = ["У нас было 2 мешка травы, 75 таблеток мисколина, 5 марок мощнейшей кислоты, пол солонки кокаина...", "Jjsfj jsjfa oasfj asfj safjaj asfjjqj afsasf kaskfas kasf kasf kassafkm",
                     "Одна история офигеннее другой", "{{description}}", "Вы знаете, чем учителя отличаются от педофилов? *первый урок математики*", "Ты видишь физру? Нет. И я не вижу, а она есть", "Дифференцируемый импенданс конденсатора при параллельном подключении в сеть с переменным током 50Гц?",
-                    "Сожмись и молись, что бы тебя не спросили", "Или вы выверните карманы, или я выверну вас", "{{description}}", "Сожмись и молись, что бы тебя не спросили", "Вы знаете, чем учителя отличаются от педофилов? *первый урок математики*"];
+                    "Синодик опальных - список всех несчатсных, униженных Флюрой", "Или вы выверните карманы, или я выверну вас", "{{description}}", "Синодик опальных - список всех несчатсных, униженных Флюрой", "Вы знаете, чем учителя отличаются от педофилов? *первый урок математики*"];
     for (var i = 0; i < sub_images.length; ++i) {
         var img = new Image();
         img.src = "img/cells/" + sub_images[i];
