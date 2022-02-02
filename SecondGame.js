@@ -10,6 +10,13 @@ const SPIN = new function () {
         SPIN.create_node(50 + Math.random() * 650, 900, 350, 160, img, "popup", (node) => {node.y -= 5; if (node.y - this.h < 0) {node.destroy()}});
         person.ne_portite_damage(50);
     }
+
+    let confiscation = (person) => {
+        var img = new Image();
+        img.src = "img/Confiscation.png";
+        SPIN.create_node(50 + Math.random() * 650, 900, 350, 160, img, "popup", (node) => {node.y -= 5; if (node.y - this.h < 0) {node.destroy()}});
+    }
+
     var card_title = ["Альтаировский гамбит", "Угадай, какой загашу", "Домашняя работа", "Опять перемена", "Поднимешь руку на оборудование технопарка?"];
     var card_info = ["А вы доверяете своему тактическому гению?", "4 стола, 3 ракетки, а мячика нет", "Сомнительный досуг", "Сложно продолжать спать пока звенит колокольчик", "Тварь я дрожащая или право имею?"];
     var card_types = ["chess", "tennis", "ht", "relax", "delete"];
@@ -261,9 +268,9 @@ const SPIN = new function () {
             super(x * 150, y * 150, w, h, img, type, update);
             this.type = type
             this.idle_image = img;
-            this.max_hp = 10;
+            this.max_hp = 250;
             this.hp = this.max_hp;
-            this.speed = 100;
+            this.speed = 6;
             this.frame = 0;
             this.cur_frame = 0;
             this.need_frame = 6;
@@ -315,8 +322,8 @@ const SPIN = new function () {
             this.some_activity = true;
             this.idle_image = new Image();
             this.idle_image.src = "img/hero/Die.png";
-            var gif_frames = ["img/hero/Sleep1.png", "img/hero/Sleep2.png", "img/hero/Sleep3.png", "img/hero/Sleep4.png", "img/hero/Sleep5.png", "img/hero/Sleep6.png"]
-            SPIN.create_gif(600, 400, 600, 600, (node) => {if (node.tick > 60) {node.tick = 0; node.frame++; if (node.frame >= node.imgs.length) {node.frame = 0;}} node.img = node.imgs[node.frame]; node.tick++;}, gif_frames);
+            var gif_frames = ["img/hero/Sleep1.png", "img/hero/Sleep1.png", "img/hero/Sleep1.png", "img/hero/Sleep2.png", "img/hero/Sleep3.png", "img/hero/Sleep4.png", "img/hero/Sleep5.png", "img/hero/Sleep6.png"]
+            SPIN.create_gif(225, 50, 600, 600, (node) => {if (node.tick > 60) {node.tick = 0; node.frame++; if (node.frame >= node.imgs.length) {node.frame = 0;}} node.img = node.imgs[node.frame]; node.tick++;}, gif_frames);
             var img = new Image();
             img.src = "img/die-pop-up.png";
             SPIN.create_node(0, 188, 1050, 675, img, "final", null);
@@ -413,6 +420,7 @@ const SPIN = new function () {
         }
 
         shmon_damage(dam) {
+            confiscation(this);
             var n_d_c = 2;
             for (var i = cells.length - 1; i > 1; --i) {
                 if (cells[i].obj) {
@@ -601,7 +609,6 @@ const SPIN = new function () {
         if (person && !person.is_alive) {
             for (let i = nodes.length - 1; i > -1; --i) {
                 if (nodes[i].type == "final" || nodes[i].type == "gif") {
-                    console.log("А?");
                     if (for_destroy[nodes[i].id]) {
                         nodes.splice(i, 1);
                         continue;
@@ -610,8 +617,14 @@ const SPIN = new function () {
                     nodes[i].draw();
                 }
             }
-            drawText(30, 320, "#000000", "Ваш результат: Вы смогли прожить " + spin + " дней в школе");
-            drawText(30, 360, "#000000", "А мы тут уже полтора года выживаем!");
+//            var d = "дней";
+//            console.log(spin + " " + spin % 10 >= 5 && spin % 10 <= 9 + " " + (spin >= 10 && spin <= 19));
+            if (spin % 10 >= 5 && spin % 10 <= 9 || spin >= 10 && spin <= 19) {d = "дней";}
+            else if (spin % 10 == 1) {d = "день";}
+            else {d = "дня";}
+
+            drawText(200, 720, "#000000", "Поздравляю, вы смогли прожить " + spin + " " + d + " в школе!");
+            drawText(200, 760, "#000000", "А мы тут уже полтора года выживаем!");
         }
 //      console.log(document.getElementById("cnv").style.cursor);
         document.getElementById("cnv").style.cursor = (is_pressed ? "url('img/cursorPressed.png'), auto" : "url('img/cursor.png'), auto");
