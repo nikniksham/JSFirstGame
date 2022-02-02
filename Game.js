@@ -326,7 +326,7 @@ const SPIN = new function () {
             SPIN.create_gif(225, 50, 600, 600, (node) => {if (node.tick > 60) {node.tick = 0; node.frame++; if (node.frame >= node.imgs.length) {node.frame = 0;}} node.img = node.imgs[node.frame]; node.tick++;}, gif_frames);
             var img = new Image();
             img.src = "img/die-pop-up.png";
-            SPIN.create_node(0, 188, 1050, 675, img, "final", null);
+            SPIN.create_node(150, 188, 1050, 675, img, "final", null);
         }
 
         go_to_next() {
