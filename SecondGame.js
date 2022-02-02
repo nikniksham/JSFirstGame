@@ -78,7 +78,7 @@ const SPIN = new function () {
                 if (this.title == "USB флешки на стол!") {
                     person.shmon_damage(this.damage);
                 } else {
-                    console.log(person.home_task);
+//                    console.log(person.home_task);
                     person.damage((person.home_task ? -Math.abs(this.damage) : this.damage));
                 }
             }
@@ -159,7 +159,7 @@ const SPIN = new function () {
                 if (this.cell && this.cell.cell_id in [0, 1] || cell.cell_id in [0, 1] && cell.obj) {
                     return false;
                 } else if (!cell.obj) {
-                    console.log("Тут 1");
+//                    console.log("Тут 1");
                     if (this.cell) {
                         this.cell.obj = null;
                     }
@@ -170,7 +170,7 @@ const SPIN = new function () {
                     this.start_x = cell.x;
                     this.start_y = cell.y;
                 } else if (!this.cell) {
-                    console.log("Тут 2");
+//                    console.log("Тут 2");
                     cell.obj = this;
                     this.cell = cell;
                     this.x = cell.x;
@@ -178,7 +178,7 @@ const SPIN = new function () {
                     this.start_x = cell.x;
                     this.start_y = cell.y;
                 } else {
-                    console.log("Тут 3");
+//                    console.log("Тут 3");
                     if (this.cell) {
                         this.cell.obj = null;
                     }
@@ -431,11 +431,10 @@ const SPIN = new function () {
     };
 
     SPIN.create_card = (card_id) => {
-        var obje = new Card(1, 3, 112, 144, card_images[card_id], "card", null, card_functions[card_id], card_title[card_id], card_info[card_id]), tmp_obj = null;
         var f = true;
         for (var i = 2; i < cells.length; ++i) {
             if (!cells[i].obj) {
-                console.log("ПИДАРАС!!!");
+                var obje = new Card(1, 3, 112, 144, card_images[card_id], "card", null, card_functions[card_id], card_title[card_id], card_info[card_id]);
                 obje.set_cell(cells[i]);
                 f = false;
                 break;
@@ -450,23 +449,14 @@ const SPIN = new function () {
             for (var i = cells.length - 1; i > 2; --i) {
                 var obj = cells[i - 1].obj;
                 cells[i].obj = null;
-                if (obj && i > 2) {
-                    console.log("move obj to " + i);
+                if (obj) {
+//                    console.log("move obj to " + i);
                     obj.set_cell(cells[i]);
-//                    cells[i].obj = obj;
-//                    obj.x = cells[i].x;
-//                    obj.y = cells[i].y;
-//                    obj.start_x = cells[i].x;
-//                    obj.start_y = cells[i].y;
-//                    obj.cell = cells[i];
                 }
-//                obj = tmp_obj;
             }
-//            if (cells[2].obj) {
-//                cells[2].obj.destroy();
-//            }
-            console.log("Задаю клетку, тут я ваще не понял");
-//            obje.set_cell(cells[2]);
+//            console.log("Задаю клетку, тут я ваще не понял");
+            var obje = new Card(1, 3, 112, 144, card_images[card_id], "card", null, card_functions[card_id], card_title[card_id], card_info[card_id]);
+            obje.set_cell(cells[2]);
         }
     };
 
@@ -529,8 +519,8 @@ const SPIN = new function () {
             }
         }
 
-        document.getElementById("cnv").style.cursor = (is_pressed ? "url('img/cursorPressed.png'), auto" : "url('img/cursor.png'), auto");
-        // console.log(document.getElementById("cnv").style.cursor);
+//        console.log(document.getElementById("cnv").style.cursor);
+//        document.getElementById("cnv").style.cursor = (is_pressed ? "url('img/cursorPressed.png'), auto" : "url('img/cursor.png'), auto");
         // console.log(document.body.style.cursor);
         requestAnimationFrame(SPIN.update);
         timer++;
