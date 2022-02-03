@@ -7,14 +7,14 @@ const SPIN = new function () {
     let ne_portite_image_func = (person) => {
         var img = new Image();
         img.src = "img/DontDestroy.png";
-        SPIN.create_node(50 + Math.random() * 650, 900, 350, 160, img, "popup", (node) => {node.y -= 3; if (node.y - this.h < 0) {node.destroy()}});
+        SPIN.create_node(50 + Math.random() * 650, 900, 350, 160, img, "popup", (node) => {node.y -= 48 / delta; if (node.y - this.h < 0) {node.destroy()}});
         person.ne_portite_damage(50);
     }
 
     let confiscation = (person) => {
         var img = new Image();
         img.src = "img/Confiscation.png";
-        SPIN.create_node(50 + Math.random() * 650, 900, 350, 160, img, "popup", (node) => {node.y -= 3; if (node.y - this.h < 0) {node.destroy()}});
+        SPIN.create_node(50 + Math.random() * 650, 900, 350, 160, img, "popup", (node) => {node.y -= 48 / delta; if (node.y - this.h < 0) {node.destroy()}});
     }
 
     var card_title = ["Альтаировский гамбит", "Угадай, какой загашу", "Домашняя работа", "Опять перемена", "Поднимешь руку на оборудование технопарка?"];
@@ -323,7 +323,7 @@ const SPIN = new function () {
             this.idle_image = new Image();
             this.idle_image.src = "img/hero/Die.png";
             var gif_frames = ["img/hero/Sleep1.png", "img/hero/Sleep1.png", "img/hero/Sleep1.png", "img/hero/Sleep2.png", "img/hero/Sleep3.png", "img/hero/Sleep4.png", "img/hero/Sleep5.png", "img/hero/Sleep6.png"]
-            SPIN.create_gif(225, 50, 600, 600, (node) => {if (node.tick > 60) {node.tick = 0; node.frame++; if (node.frame >= node.imgs.length) {node.frame = 0;}} node.img = node.imgs[node.frame]; node.tick++;}, gif_frames);
+            SPIN.create_gif(225, 50, 600, 600, (node) => {if (node.tick > 800) {node.tick = 0; node.frame++; if (node.frame >= node.imgs.length) {node.frame = 0;}} node.img = node.imgs[node.frame]; node.tick += delta; console.log(node.tick);}, gif_frames);
             var img = new Image();
             img.src = "img/die-pop-up.png";
             SPIN.create_node(150, 188, 1050, 675, img, "final", null);
@@ -436,9 +436,11 @@ const SPIN = new function () {
 
         damage(dam, fr_sh = false) {
             if (this.is_alive) {
-                if (this.home_task && !fr_sh) {
-                    this.hp += Math.abs(Math.floor(dam / 2 + 0.5));
+                if (this.home_task && !fr_sh || dam < 0) {
+                    SPIN.create_particle_system(this.x, this.x + 150, this.y + 150, this.y + 50, 31, 31, "img/hero/Heal.png", (node) => {if (!node.st) {node.st = node.y;} else if (node.st - node.y > 150) {node.destroy();} node.y -= 10 / delta;}, 3);
+                    this.hp += (this.home_task ? Math.abs(Math.floor(dam / 2 + 0.5)) : Math.abs(Math.floor(dam + 0.5)));
                 } else {
+                    SPIN.create_particle_system(this.x, this.x + 150, this.y + 150, this.y + 50, 31, 31, "img/hero/Damage.png", (node) => {if (!node.st) {node.st = node.y;} else if (node.st - node.y > 150) {node.destroy();} node.y -= 10 / delta;}, 3);
                     this.hp -= Math.floor(dam + 0.5);
                 }
     //            this.hp -= ((this.home_task && !fr_sh) ? -Math.abs(this.dam) : this.dam);
@@ -481,6 +483,14 @@ const SPIN = new function () {
             this.img = imgs[0];
         }
     }
+
+    SPIN.create_particle_system = (min_x, max_x, min_y, max_y, w, h, img_name, update, count) => {
+        img = new Image();
+        img.src = img_name;
+        for (var i = 0; i < count; ++i) {
+            SPIN.create_node(min_x + Math.random() * (max_x - min_x - w), min_y + Math.random() * (max_y - min_y), w, h, img, "particle", update);
+        }
+    };
 
     SPIN.create_gif = (x, y, w, h, update, imgs) => {
         return new Gif(x, y, w, h, update, imgs);
@@ -585,10 +595,13 @@ const SPIN = new function () {
         }
 
         for (let i = nodes.length - 1; i > -1; --i) {
-            if (nodes[i].type == "popup") {
+            if (nodes[i].type == "popup" || nodes[i].type == "particle") {
                 if (for_destroy[nodes[i].id]) {
                     nodes.splice(i, 1);
                     continue;
+                }
+                if (nodes[i].type == "particle") {
+                    console.log("particle");
                 }
                 nodes[i]._update();
                 nodes[i].draw();
@@ -704,7 +717,7 @@ const SPIN = new function () {
 window.addEventListener('load', function() {
     SPIN.start(1050, 1050)
     var sub_images = ["Chemistry.png", "English.png", "History.png", "Informatic.png", "Math.png", "PE.png", "Physics.png", "Russian.png", "Shmon.png", "Informatic.png", "Russian.png", "Math.png"];
-    var sub_damage = [[0.8, 10], [0.4, 15], [0.2, -5], [0.2, -15], [0.6, 30], [0, 0], [0.7, 10], [0.1, 60], [0.5, 30], [0.2, -15], [0.1, 60], [0.6, 30]];
+    var sub_damage = [[0.8, 10], [0.75, 10], [0.2, -5], [0.3, -15], [0.6, 30], [0, 0], [0.9, 5], [0.1, 60], [0.5, 30], [0.3, -15], [0.1, 60], [0.6, 30]];
     var sub_position = [[4, 0], [0, 2], [6, 3], [4, 6], [0, 6], [6, 5], [0, 4], [0, 0], [6, 0], [6, 1], [2, 6], [2, 0]]
     var sub_types = ["Chemistry", "English", "History", "IT", "Math", "Idk", "Physic", "Russian", "Shmon", "IT", "Russian", "Math"]
     var sub_titles = ["Где лабораторные работы?", "Даже Гоблин делал озвучку лучше, чем актёры Starlight", "Верните мой мезозой", "{{text}}", "Каков шанс сдать ЕГЭ?", "Кто-кто?", "E = mc^2", "Татары злопамятны", "Злая тётя", "{{text}}", "Татары злопамятны", "Каков шанс сдать ЕГЭ?"];
