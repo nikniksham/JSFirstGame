@@ -1,6 +1,6 @@
 const SPIN = new function () {
     let SPIN = this, cnv, ctx, width, height, nodes = [], for_destroy = {}, node_count = 0, down_keys = {}, timer = 0, card_move = false, cells = [];
-    var mouse_x = 0, mouse_y = 0, offset_x = 0, offset_y = 0, scroll_x = 0, scroll_y = 0, is_pressed = false, destr_card = 2, cell_id = 0, person, move_del = false, spin = 0;
+    var mouse_x = 0, mouse_y = 0, offset_x = 0, offset_y = 0, scroll_x = 0, scroll_y = 0, is_pressed = false, destr_card = 2, cell_id = 0, person, move_del = false, spin = 0, time_frame = new Date(), delta, cur_time;
     var html = document.documentElement, cursor = document.body.style.cursor;
     var delete_image = new Image();
     delete_image.src = "img/cells/Delete.png";
@@ -270,10 +270,10 @@ const SPIN = new function () {
             this.idle_image = img;
             this.max_hp = 250;
             this.hp = this.max_hp;
-            this.speed = 5;
+            this.speed = 85;
             this.frame = 0;
             this.cur_frame = 0;
-            this.need_frame = 7;
+            this.need_frame = 140;
             this.on_move = false;
             this.is_alive = true;
             this.some_activity = false;
@@ -359,41 +359,41 @@ const SPIN = new function () {
 
         move() {
             if (this.x > this.cell_x * 150) {
-                this.x = Math.max(this.cell_x * 150, this.x - this.speed);
+                this.x = Math.max(this.cell_x * 150, this.x - this.speed / delta);
                 if (this.frame > this.need_frame) {
                     this.frame = 0;
                     this.cur_frame++;
                     if (this.cur_frame >= this.left.length) { this.cur_frame = 0; }
                     this.img = this.left[this.cur_frame];
                 }
-                this.frame++;
+                this.frame += delta;
             } else if (this.x < this.cell_x * 150) {
-                this.x = Math.min(this.cell_x * 150, this.x + this.speed);
+                this.x = Math.min(this.cell_x * 150, this.x + this.speed / delta);
                 if (this.frame > this.need_frame) {
                     this.frame = 0;
                     this.cur_frame++;
                     if (this.cur_frame >= this.right.length) { this.cur_frame = 0; }
                     this.img = this.right[this.cur_frame];
                 }
-                this.frame++;
+                this.frame += delta;
             } else if (this.y > this.cell_y * 150) {
-                this.y = Math.max(this.cell_y * 150, this.y - this.speed);
+                this.y = Math.max(this.cell_y * 150, this.y - this.speed / delta);
                 if (this.frame > this.need_frame) {
                     this.frame = 0;
                     this.cur_frame++;
                     if (this.cur_frame >= this.front.length) { this.cur_frame = 0; }
                     this.img = this.front[this.cur_frame];
                 }
-                this.frame++;
+                this.frame += delta;
             } else if (this.y < this.cell_y * 150) {
-                this.y = Math.min(this.cell_y * 150, this.y + this.speed);
+                this.y = Math.min(this.cell_y * 150, this.y + this.speed / delta);
                 if (this.frame > this.need_frame) {
                     this.frame = 0;
                     this.cur_frame++;
                     if (this.cur_frame >= this.back.length) { this.cur_frame = 0; }
                     this.img = this.back[this.cur_frame];
                 }
-                this.frame++;
+                this.frame += delta;
             } else {
                 if (this.on_move) {
                     this.on_move = false;
@@ -448,7 +448,7 @@ const SPIN = new function () {
                     this.is_alive = false;
                 } else if (!fr_sh && !this.home_task) {  // && Math.random() > 0.5
                     var id = 0, count = 0;
-                    while (count < 1 && dam > 0) {
+                    while (count < Math.floor(Math.random() * 2.999) && dam > 0) {
                         id = Math.floor(Math.random() * 4.4);
                         if (id == 4) {
                             if (destr_card > 0) {
@@ -533,6 +533,9 @@ const SPIN = new function () {
     };
 
     SPIN.update = () => {
+        cur_time = new Date();
+        delta = cur_time - time_frame;
+        time_frame = cur_time;
         ctx.clearRect(0, 0, width, height);
         for (let i = nodes.length - 1; i > -1; --i) {
             if (nodes[i].type != "card" && nodes[i].type != "person" && nodes[i].type != "popup") {
@@ -570,7 +573,7 @@ const SPIN = new function () {
 //                  console.log("I'm here " + down_keys["KeyG"]);
                     if (!nodes[i].some_activity && nodes[i].is_alive) {
                         if (nodes[i].on_move) {
-                            nodes[i].move();
+                            nodes[i].move(delta);
                         } else if (down_keys["KeyG"]) {
                             nodes[i].go_to_next();
                         }
