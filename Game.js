@@ -545,6 +545,11 @@ const SPIN = new function () {
     SPIN.update = () => {
         cur_time = new Date();
         delta = cur_time - time_frame;
+        while (delta < 10) {
+            cur_time = new Date();
+            delta = cur_time - time_frame;
+            // console.log(delta)
+        }
         time_frame = cur_time;
         ctx.clearRect(0, 0, width, height);
         for (let i = nodes.length - 1; i > -1; --i) {
